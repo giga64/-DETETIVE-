@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste Detetive</title>
+  <link rel="stylesheet" href="static/modern-style.css">
+</head>
+<body>
+  <div class="detective-container">
+    <div class="detective-card">
+      <!-- Theme Toggle -->
+      <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
+        <span id="theme-icon">🌙</span>
+      </button>
+
+      <!-- Header -->
+      <div class="detective-header">
+        <div class="icon">
+          🕵️‍♂️
+          <h1>Bem-vindo ao detetive</h1>
+        </div>
+        <p class="subtitle">Insira o CPF ou CNPJ para iniciar a investigação.</p>
+      </div>
+
+      <!-- Form -->
+      <form class="investigation-form">
+        <div class="form-group">
+          <input 
+            type="text" 
+            id="identificador" 
+            name="identificador" 
+            class="form-input"
+            placeholder="Ex: 012.345.678-90 ou 12.345.678/0001-90"
+            required
+          >
+        </div>
+        
+        <button type="submit" class="submit-button">
+          🔍 Iniciar investigação
+        </button>
+      </form>
+      
+      <!-- History Button -->
+      <div class="history-button-container">
+        <a href="#" class="history-link">📋 Ver histórico</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="static/detective.js"></script>
+</body>
+</html> 
