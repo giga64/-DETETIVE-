@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🕵️‍♂️ Detetive - Histórico de Consultas</title>
+  <link rel="stylesheet" href="/static/modern-style.css">
+  <link rel="icon" href="/static/favicon.ico">
+  <style>
+    .history-list { max-height: 400px; overflow-y: auto; margin-bottom: 1rem; }
+    .history-item { cursor: pointer; border-bottom: 1px dashed var(--border); padding: 0.7rem 0; transition: background 0.2s; }
+    .history-item:hover { background: var(--muted); }
+    .history-item-header { display: flex; justify-content: space-between; font-size: 0.95em; margin-bottom: 0.2em; }
+    .history-identifier { font-weight: 600; color: var(--primary); }
+    .history-date { color: var(--muted-foreground); font-size: 0.85em; }
+    .history-preview { color: var(--foreground); font-size: 0.93em; white-space: pre-line; }
+    .empty-history { text-align: center; color: var(--muted-foreground); margin: 2rem 0; }
+    .clear-history-link { margin-left: 1rem; color: var(--destructive); }
+    .result-content { background: var(--detective-report); border: 1px dashed var(--detective-border); border-radius: 0.375rem; padding: 1rem; white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.95em; color: var(--foreground); margin-bottom: 1rem; }
+    .copy-button { float: right; margin-top: 0.5rem; }
+    .result-section { display: none; }
+    .back-to-history { margin-bottom:1em; }
+    .back-to-history .back-link { 
+      background-color: var(--secondary); 
+      color: var(--secondary-foreground); 
+      padding: 0.5rem; 
+      border-radius: 0.375rem; text-decoration: none; 
+      display: inline-block; 
+      transition: all 0.2s; 
+    }
+    .back-to-history .back-link:hover { 
+      background-color: var(--accent); 
+      color: var(--accent-foreground); 
+    }
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom:1
+    }
+    .result-title[object Object]
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="detective-container">
+    <div class="detective-card">
+      <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
+        <span id="theme-icon">🌙</span>
+      </button>
+      <div class="detective-header">
+        <div class="icon">
+          🕵️‍♂️
+          <h1>Detetive</h1>
+        </div>
+        <p class="subtitle">Histórico de consultas (últimos 5)</p>
+      </div>
+      
+      <!-- History Section -->
+      <div id="history-section" class="history-section">
+        <div id="history-list" class="history-list"></div>
+        <div id="empty-history" class="empty-history" style="display:none;">
+          <p>📋 Nenhuma consulta encontrada no histórico</p>
+          <p class="empty-subtitle">As consultas aparecerão aqui após serem realizadas</p>
+        </div>
+      </div>
+      
+      <!-- Result Section -->
+      <div id="result-section" class="result-section">
+        <div class="back-to-history">
+          <button onclick="showHistory()" class="back-link">← Voltar ao histórico</button>
+        </div>
+        <div class="result-header">
+          <h2 class="result-title">🔍 Resultado da Consulta</h2>
+          <button class="copy-button" onclick="copyResult()" title="Copiar resultado">📋 Copiar</button>
+        </div>
+        <div class="result-identifier">
+          <strong>CPF/CNPJ:</strong> <span id="resultIdentifier"></span>
+        </div>
+        <div class="result-content-container">
+          <div class="result-content" id="resultContent"></div>
+        </div>
+      </div>
+      
+      <div class="history-actions">
+        <a href="/" class="back-link">← Nova consulta</a>
+        <button onclick="clearHistory()" class="submit-button" style="width: auto; margin-left:1rem;">🗑️ Limpar histórico</button>
+      </div>
+    </div>
+  </div>
+  <script src="/static/detective.js"></script>
+  <script>
+    // Histórico local (últimos 5)
+    function getHistory() {
+      let h = localStorage.getItem('detetive_history');
+      if (!h) return [];
+      try { return JSON.parse(h) || []; } catch { return []; }
+    }
+    function setHistory(arr) {
+      localStorage.setItem('detetive_history', JSON.stringify(arr));
+    }
+    function renderHistory() {
+      const list = document.getElementById('history-list');
+      const empty = document.getElementById('empty-history');
+      let history = getHistory();
+      if (!Array.isArray(history) || history.length === 0) {
+        list.innerHTML = '';
+        empty.style.display = '';
+        return;
+      }
+      empty.style.display = 'none';
+      // Só os 5 mais recentes
+      history = history.slice(-5).reverse();
+      list.innerHTML = '';
+      history.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.onclick = () => showSearchResult(item.identifier, item.response);
+        div.innerHTML = `
+          <div class="history-item-header">
+            <span class="history-identifier">${item.identifier}</span>
+            <span class="history-date">${item.searched_at || ''}</span>
+          </div>
+          <div class="history-preview">${(item.response||'').substring(0,100)}${(item.response||'').length>100?'...':''}</div>
+        `;
+        list.appendChild(div);
+      });
+    }
+    function clearHistory() {
+      localStorage.removeItem('detetive_history');
+      renderHistory();
+    }
+    
+    // Mostrar resultado dentro da página
+    function showSearchResult(identifier, result) {
+      document.getElementById('resultIdentifier').textContent = identifier;
+      document.getElementById('resultContent').textContent = result;
+      document.getElementById('history-section').style.display = 'none';
+      document.getElementById('result-section').style.display = 'block';
+    }
+    
+    function showHistory() {
+      document.getElementById('result-section').style.display = 'none';
+      document.getElementById('history-section').style.display = 'block';
+    }
+    
+    function copyResult() {
+      const result = document.getElementById('resultContent').textContent;
+      navigator.clipboard.writeText(result).then(() => {
+        const copyBtn = document.querySelector('.copy-button');
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = '✅ Copiado!';
+        copyBtn.style.backgroundColor = 'var(--accent)';
+        setTimeout(() => {
+          copyBtn.textContent = originalText;
+          copyBtn.style.backgroundColor = '';
+        }, 2000);
+      }).catch(err => {
+        alert('Erro ao copiar o texto. Tente selecionar e copiar manualmente.');
+      });
+    }
+    
+    // Carregar histórico ao abrir
+    renderHistory();
+  </script>
+</body>
+</html> 

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🕵️‍♂️ Detetive - Resultado da Consulta</title>
+  <link rel="stylesheet" href="/static/modern-style.css">
+  <link rel="icon" href="/static/favicon.ico">
+</head>
+<body>
+  <div class="detective-container">
+    <div class="detective-card">
+      <!-- Theme Toggle -->
+      <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
+        <span id="theme-icon">🌙</span>
+      </button>
+      <!-- Header -->
+      <div class="detective-header">
+        <div class="icon">
+          🕵️‍♂️
+          <h1>Detetive</h1>
+        </div>
+        <p class="subtitle">Resultado da investigação</p>
+      </div>
+      <!-- Result Section -->
+      <div class="result-section">
+        <div class="result-header">
+          <h2 class="result-title">{{ mensagem }}</h2>
+          <button class="copy-button" onclick="copyResult()" title="Copiar resultado">📋 Copiar</button>
+        </div>
+        <div class="result-content">{{ resultado }}</div>
+      </div>
+      <!-- Back Link -->
+      <a href="/" class="back-link">
+        ← Nova consulta
+      </a>
+    </div>
+  </div>
+  <script src="/static/detective.js"></script>
+  <script>
+    // Theme Toggle
+    function toggleTheme() {
+      const body = document.body;
+      const themeIcon = document.getElementById('theme-icon');
+      if (body.classList.contains('dark')) {
+        body.classList.remove('dark');
+        themeIcon.textContent = '🌙';
+        localStorage.setItem('theme', 'light');
+      } else {
+        body.classList.add('dark');
+        themeIcon.textContent = '☀️';
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      document.body.classList.add('dark');
+      document.getElementById('theme-icon').textContent = '☀️';
+    }
+    
+    // Salvar no histórico local
+    document.addEventListener('DOMContentLoaded', function() {
+      const identifier = '{{ identifier }}';
+      const result = `{{ resultado }}`;
+      if (identifier && result && !result.includes('Erro') && !result.includes('Timeout')) {
+        // Pegar histórico atual
+        let history = [];
+        try {
+          const saved = localStorage.getItem('detetive_history');
+          if (saved) history = JSON.parse(saved);
+        } catch (e) {
+          history = [];
+        }
+        
+        // Adicionar nova consulta
+        const newItem = {
+          identifier: identifier,
+          response: result,
+          searched_at: new Date().toLocaleString('pt-BR')
+        };
+        
+        history.push(newItem);
+        
+        // Manter só os últimos 5
+        if (history.length > 5) {
+          history = history.slice(-5);
+        }
+        
+        // Salvar
+        localStorage.setItem('detetive_history', JSON.stringify(history));
+      }
+    });
+    
+    // Função para copiar resultado
+    function copyResult() {
+      const result = document.querySelector('.result-content').textContent;
+      navigator.clipboard.writeText(result).then(() => {
+        const copyBtn = document.querySelector('.copy-button');
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = '✅ Copiado!';
+        copyBtn.style.backgroundColor = 'var(--accent)';
+        setTimeout(() => {
+          copyBtn.textContent = originalText;
+          copyBtn.style.backgroundColor = '';
+        }, 2000);
+      }).catch(err => {
+        alert('Erro ao copiar o texto. Tente selecionar e copiar manualmente.');
+      });
+    }
+  </script>
+</body>
+</html> 

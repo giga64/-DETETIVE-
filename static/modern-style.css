@@ -1,0 +1,324 @@
+/* Modern Detetive Theme - Base Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Detetive Digital Theme - Light Mode */
+  --background: hsl(42, 15%, 97%);
+  --foreground: hsl(42, 15%, 15%);
+  --card: hsl(42, 25%, 95%);
+  --card-foreground: hsl(42, 15%, 15%);
+  --primary: hsl(42, 20%, 18%);
+  --primary-foreground: hsl(42, 25%, 95%);
+  --secondary: hsl(42, 25%, 88%);
+  --secondary-foreground: hsl(42, 20%, 25%);
+  --muted: hsl(42, 20%, 92%);
+  --muted-foreground: hsl(42, 10%, 55%);
+  --accent: hsl(45, 80%, 75%);
+  --accent-foreground: hsl(42, 20%, 18%);
+  --destructive: hsl(0, 75%, 60%);
+  --destructive-foreground: hsl(42, 25%, 95%);
+  --border: hsl(42, 20%, 85%);
+  --input: hsl(42, 20%, 90%);
+  --ring: hsl(45, 80%, 65%);
+  --detective-report: hsl(42, 30%, 96%);
+  --detective-border: hsl(42, 25%, 75%);
+  --detective-shadow: hsl(42, 20%, 25%);
+  --radius: 0.5rem;
+}
+
+.dark {
+  /* Detetive Digital Theme - Dark Mode */
+  --background: hsl(42, 15%, 8%);
+  --foreground: hsl(42, 25%, 92%);
+  --card: hsl(42, 20%, 12%);
+  --card-foreground: hsl(42, 25%, 92%);
+  --primary: hsl(42, 25%, 85%);
+  --primary-foreground: hsl(42, 20%, 15%);
+  --secondary: hsl(42, 15%, 18%);
+  --secondary-foreground: hsl(42, 25%, 85%);
+  --muted: hsl(42, 10%, 15%);
+  --muted-foreground: hsl(42, 10%, 65%);
+  --accent: hsl(45, 70%, 65%);
+  --accent-foreground: hsl(42, 20%, 15%);
+  --destructive: hsl(0, 75%, 55%);
+  --destructive-foreground: hsl(42, 25%, 92%);
+  --border: hsl(42, 15%, 22%);
+  --input: hsl(42, 15%, 20%);
+  --ring: hsl(45, 70%, 55%);
+  --detective-report: hsl(42, 15%, 10%);
+  --detective-border: hsl(42, 20%, 30%);
+  --detective-shadow: hsl(42, 10%, 5%);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', system-ui, sans-serif;
+  transition: color 0.3s, background-color 0.3s;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.detective-container {
+  min-height: 100vh;
+  background-color: var(--background);
+  font-family: 'Inter', system-ui, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.detective-card {
+  width: 100%;
+  max-width: 34rem;
+  background-color: var(--card);
+  border: 1px solid var(--detective-border);
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+}
+
+.theme-toggle {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  color: var(--muted-foreground);
+  transition: all 0.2s;
+}
+.theme-toggle:hover {
+  background-color: var(--muted);
+  color: var(--foreground);
+}
+
+.detective-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+.detective-header .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.detective-header h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--foreground);
+  margin: 0;
+}
+.detective-header .subtitle {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  margin: 0;
+  margin-bottom: 0.5rem;
+}
+
+.investigation-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.form-input {
+  width: 90%;
+  max-width: 500px;
+  margin: 0 auto 0.5rem auto;
+  display: block;
+  padding: 1.1rem;
+  border: 1.5px solid var(--border);
+  border-radius: 0.5rem;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-size: 1.1rem;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+.form-input::placeholder {
+  color: var(--muted-foreground);
+}
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.form-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.error-message {
+  color: var(--destructive);
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0;
+}
+.submit-button {
+  font-size: 1rem;
+  padding: 0.5rem 0.5rem;
+  border-radius: 0.375rem;
+  width: 60%;
+  margin: 0.5rem auto 0.5rem auto;
+  display: block;
+}
+.submit-button:hover:not(:disabled) {
+  background-color: hsl(42, 20%, 15%);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: scale(1.02);
+}
+.submit-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.submit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+.loading {
+  animation: pulseSubtle 2s infinite;
+}
+.result-section {
+  margin-top: 1.5rem;
+}
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.result-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--foreground);
+  margin: 0;
+}
+.result-content {
+  background-color: var(--detective-report);
+  border: 1px dashed var(--detective-border);
+  border-radius: 0.375rem;
+  padding: 1rem;
+  white-space: pre-wrap;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  color: var(--foreground);
+  margin-bottom: 1rem;
+}
+.result-content-container {
+  position: relative;
+}
+.copy-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.copy-button:hover {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+.history-button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.history-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.4rem 0.8rem;
+  background-color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  transition: all 0.2s;
+}
+.history-link:hover {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.back-link {
+  display: inline-block;
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-top: 1rem;
+  transition: color 0.2s;
+}
+.back-link:hover {
+  color: var(--accent-foreground);
+  text-decoration: underline;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes pulseSubtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+@media (min-width: 640px) {
+  .detective-container {
+    padding: 1rem;
+  }
+  .detective-card {
+    max-width: 28rem;
+    padding: 2rem;
+  }
+  .theme-toggle {
+    top: 1.5rem;
+    right: 1.5rem;
+  }
+} 
