@@ -155,3 +155,9 @@ def limpar_historico(request: Request):
     return templates.TemplateResponse("modern-form.html", {"request": request})
 
 
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("app:app", host="0.0.0.0", port=port)
+
+

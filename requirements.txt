@@ -3,3 +3,4 @@ uvicorn
 telethon
 jinja2
 playwright  # Remova se não for usar automação de navegador 
+python-multipart
