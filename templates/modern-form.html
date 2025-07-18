@@ -8,47 +8,75 @@
   <link rel="icon" href="/static/favicon.ico">
 </head>
 <body>
-  <div class="detective-container">
-    <div class="detective-card">
-      <!-- Theme Toggle -->
+  <div class="container">
+    <!-- Theme Toggle -->
+    <div class="form-top-actions">
       <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
         <span id="theme-icon">🌙</span>
       </button>
-      <!-- Header -->
-      <div class="detective-header">
-        <div class="icon">
-          🕵️‍♂️
-          <h1>Detetive</h1>
-        </div>
-        <p class="subtitle">Sistema de consulta de CPF e CNPJ</p>
+    </div>
+    <!-- Header -->
+    <div class="detective-header">
+      <div class="icon">
+        <h1>Detetive</h1>
       </div>
-      <!-- Form -->
-      <form class="investigation-form" action="/consulta" method="post">
-        <div class="form-group">
-          <input 
-            type="text" 
-            id="identificador" 
-            name="identificador" 
-            class="form-input"
-            placeholder="Ex: 012.345.678-90 ou 12.345.678/0001-90"
-            value="{{ reuse_value or '' }}"
-            required
-            oninput="formatCpfCnpj(this)"
-          >
-          {% if erro %}
-            <p class="error-message">{{ erro }}</p>
-          {% endif %}
-        </div>
-        <button type="submit" class="submit-button">
-          🔍 Iniciar investigação
-        </button>
-      </form>
-      <!-- History Button -->
-      <div class="history-button-container">
-        <a href="/historico" class="history-link">📋 Ver histórico</a>
+      <p class="subtitle">Sistema de consulta de CPF e CNPJ</p>
+    </div>
+    <!-- Form -->
+    <form class="investigation-form" action="/consulta" method="post">
+      <div class="form-group">
+        <input 
+          type="text" 
+          id="identificador" 
+          name="identificador" 
+          class="form-input"
+          placeholder="Ex: 012.345.678-90 ou 12.345.678/0001-90"
+          value="{{ reuse_value or '' }}"
+          required
+          oninput="formatCpfCnpj(this)"
+        >
+        {% if erro %}
+          <p class="error-message">{{ erro }}</p>
+        {% endif %}
       </div>
+      <button type="submit" class="btn">
+        🔍 Iniciar investigação
+      </button>
+    </form>
+    <!-- History Button -->
+    <div class="history-button-container">
+      <a href="/historico" class="btn-historico">📋 Ver histórico</a>
     </div>
   </div>
-  <script src="/static/detective.js"></script>
+  <script>
+    window.toggleTheme = function() {
+      const body = document.body;
+      const themeIcon = document.getElementById('theme-icon');
+      if (body.classList.contains('dark')) {
+        body.classList.remove('dark');
+        themeIcon.textContent = '🌙'; // Lua para modo claro
+        themeIcon.style.color = '#fff'; // Lua branca
+        localStorage.setItem('theme', 'light');
+      } else {
+        body.classList.add('dark');
+        themeIcon.textContent = '☀️'; // Sol para modo escuro
+        themeIcon.style.color = '#FFD600'; // Sol amarelo
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      const savedTheme = localStorage.getItem('theme');
+      const themeIcon = document.getElementById('theme-icon');
+      if (savedTheme === 'dark') {
+        document.body.classList.add('dark');
+        themeIcon.textContent = '☀️';
+        themeIcon.style.color = '#FFD600';
+      } else {
+        document.body.classList.remove('dark');
+        themeIcon.textContent = '🌙';
+        themeIcon.style.color = '#fff';
+      }
+    });
+  </script>
 </body>
 </html> 

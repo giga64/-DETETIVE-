@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🕵️‍♂️ Detetive - Resultado da Consulta</title>
+  <title> Detetive - Resultado da Consulta</title>
   <link rel="stylesheet" href="/static/modern-style.css">
   <link rel="icon" href="/static/favicon.ico">
 </head>
@@ -11,13 +11,20 @@
   <div class="detective-container">
     <div class="detective-card">
       <!-- Theme Toggle -->
-      <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
-        <span id="theme-icon">🌙</span>
-      </button>
+      <div class="top-actions">
+        <div class="theme-toggle-wrapper">
+          <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
+            <span id="theme-icon">🌙</span>
+          </button>
+        </div>
+        <div class="copy-btn-wrapper" title="Copiar resultado">
+          <button class="copy-btn" id="copy-btn" onclick="copiarResultado()">📋</button>
+        </div>
+      </div>
       <!-- Header -->
       <div class="detective-header">
         <div class="icon">
-          🕵️‍♂️
+          
           <h1>Detetive</h1>
         </div>
         <p class="subtitle">Resultado da investigação</p>
@@ -26,7 +33,6 @@
       <div class="result-section">
         <div class="result-header">
           <h2 class="result-title">{{ mensagem }}</h2>
-          <button class="copy-button" onclick="copyResult()" title="Copiar resultado">📋 Copiar</button>
         </div>
         <div class="result-content">{{ resultado }}</div>
       </div>
@@ -93,17 +99,15 @@
     });
     
     // Função para copiar resultado
-    function copyResult() {
+    function copiarResultado() {
       const result = document.querySelector('.result-content').textContent;
       navigator.clipboard.writeText(result).then(() => {
-        const copyBtn = document.querySelector('.copy-button');
-        const originalText = copyBtn.textContent;
-        copyBtn.textContent = '✅ Copiado!';
-        copyBtn.style.backgroundColor = 'var(--accent)';
+        const copyBtn = document.getElementById('copy-btn');
+        const originalIcon = '📋';
+        copyBtn.textContent = '✅';
         setTimeout(() => {
-          copyBtn.textContent = originalText;
-          copyBtn.style.backgroundColor = '';
-        }, 2000);
+          copyBtn.textContent = originalIcon;
+        }, 1500);
       }).catch(err => {
         alert('Erro ao copiar o texto. Tente selecionar e copiar manualmente.');
       });

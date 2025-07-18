@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🕵️‍♂️ Detetive - Histórico de Consultas</title>
+  <title> Detetive - Histórico de Consultas</title>
   <link rel="stylesheet" href="/static/modern-style.css">
   <link rel="icon" href="/static/favicon.ico">
   <style>
@@ -20,18 +20,6 @@
     .copy-button { float: right; margin-top: 0.5rem; }
     .result-section { display: none; }
     .back-to-history { margin-bottom:1em; }
-    .back-to-history .back-link { 
-      background-color: var(--secondary); 
-      color: var(--secondary-foreground); 
-      padding: 0.5rem; 
-      border-radius: 0.375rem; text-decoration: none; 
-      display: inline-block; 
-      transition: all 0.2s; 
-    }
-    .back-to-history .back-link:hover { 
-      background-color: var(--accent); 
-      color: var(--accent-foreground); 
-    }
     .result-header {
       display: flex;
       justify-content: space-between;
@@ -46,12 +34,19 @@
 <body>
   <div class="detective-container">
     <div class="detective-card">
-      <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
-        <span id="theme-icon">🌙</span>
-      </button>
+      <div class="top-actions">
+        <div class="theme-toggle-wrapper">
+          <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
+            <span id="theme-icon">🌙</span>
+          </button>
+        </div>
+        <div class="copy-btn-wrapper" title="Copiar histórico">
+          <button class="copy-btn" id="copy-btn-historico" onclick="copiarHistorico()">📋</button>
+        </div>
+      </div>
       <div class="detective-header">
         <div class="icon">
-          🕵️‍♂️
+          
           <h1>Detetive</h1>
         </div>
         <p class="subtitle">Histórico de consultas (últimos 5)</p>
@@ -73,7 +68,6 @@
         </div>
         <div class="result-header">
           <h2 class="result-title">🔍 Resultado da Consulta</h2>
-          <button class="copy-button" onclick="copyResult()" title="Copiar resultado">📋 Copiar</button>
         </div>
         <div class="result-identifier">
           <strong>CPF/CNPJ:</strong> <span id="resultIdentifier"></span>
@@ -85,7 +79,7 @@
       
       <div class="history-actions">
         <a href="/" class="back-link">← Nova consulta</a>
-        <button onclick="clearHistory()" class="submit-button" style="width: auto; margin-left:1rem;">🗑️ Limpar histórico</button>
+        <a href="#" onclick="clearHistory(); return false;" class="back-link">🗑️ Limpar histórico</a>
       </div>
     </div>
   </div>
@@ -145,19 +139,16 @@
       document.getElementById('history-section').style.display = 'block';
     }
     
-    function copyResult() {
-      const result = document.getElementById('resultContent').textContent;
-      navigator.clipboard.writeText(result).then(() => {
-        const copyBtn = document.querySelector('.copy-button');
-        const originalText = copyBtn.textContent;
-        copyBtn.textContent = '✅ Copiado!';
-        copyBtn.style.backgroundColor = 'var(--accent)';
+    // Função para copiar histórico
+    function copiarHistorico() {
+      const historico = document.querySelector('.history-list').textContent;
+      const copyBtn = document.getElementById('copy-btn-historico');
+      navigator.clipboard.writeText(historico).then(() => {
+        const originalIcon = '📋';
+        copyBtn.textContent = '✅';
         setTimeout(() => {
-          copyBtn.textContent = originalText;
-          copyBtn.style.backgroundColor = '';
-        }, 2000);
-      }).catch(err => {
-        alert('Erro ao copiar o texto. Tente selecionar e copiar manualmente.');
+          copyBtn.textContent = originalIcon;
+        }, 1500);
       });
     }
     
