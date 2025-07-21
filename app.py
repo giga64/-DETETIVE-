@@ -91,7 +91,7 @@ async def consulta_telegram(cmd: str) -> str:
 
     async def handler(event):
         nonlocal response_text
-        response_text = event.raw_text
+        response_text = re.sub(r"🔛\s*BY:\s*@Skynet08Robot", "", event.raw_text, flags=re.IGNORECASE)
         await client.disconnect()
 
     client.add_event_handler(handler, events.NewMessage(chats=GROUP_ID))
