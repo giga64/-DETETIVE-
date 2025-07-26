@@ -62,88 +62,19 @@ GROUP_ID = -1002874013146
 telegram_lock = threading.Lock()
 
 # ----------------------
-# Validação CPF/CNPJ/OAB
+# Validação CPF/CNPJ
 # ----------------------
 CPF_RE = re.compile(r"^\d{11}$")
 CNPJ_RE = re.compile(r"^\d{14}$")
-OAB_RE = re.compile(r"^(\d{6})([A-Z]{2})$")
 
 def normalize(id_str: str) -> str:
     return re.sub(r"\D", "", id_str)
-
-def normalize_oab(oab_str: str) -> str:
-    """Normaliza OAB removendo caracteres especiais e formatando"""
-    # Remove tudo exceto números e letras
-    cleaned = re.sub(r"[^A-Za-z0-9]", "", oab_str.upper())
-    
-    # Se tem 8 caracteres (6 números + 2 letras)
-    if len(cleaned) == 8:
-        numbers = cleaned[:6]
-        letters = cleaned[6:8]
-        return f"{numbers}{letters}"
-    
-    # Se tem 7 caracteres (6 números + 1 letra)
-    elif len(cleaned) == 7:
-        numbers = cleaned[:6]
-        letter = cleaned[6]
-        return f"{numbers}{letter}"
-    
-    # Se tem apenas números, assume que faltam as letras
-    elif len(cleaned) == 6 and cleaned.isdigit():
-        return cleaned
-    
-    return cleaned
 
 def is_cpf(idn: str) -> bool:
     return bool(CPF_RE.match(idn))
 
 def is_cnpj(idn: str) -> bool:
     return bool(CNPJ_RE.match(idn))
-
-def is_oab(idn: str) -> bool:
-    """Verifica se é uma OAB válida"""
-    # Remove caracteres especiais
-    cleaned = re.sub(r"[^A-Za-z0-9]", "", idn.upper())
-    
-    # Verifica se tem 6 números + 2 letras
-    if len(cleaned) == 8:
-        numbers = cleaned[:6]
-        letters = cleaned[6:8]
-        return numbers.isdigit() and letters.isalpha()
-    
-    # Verifica se tem 6 números + 1 letra
-    elif len(cleaned) == 7:
-        numbers = cleaned[:6]
-        letter = cleaned[6]
-        return numbers.isdigit() and letter.isalpha()
-    
-    # Verifica se tem apenas 6 números
-    elif len(cleaned) == 6 and cleaned.isdigit():
-        return True
-    
-    return False
-
-def get_oab_command(oab: str) -> str:
-    """Gera comando para consulta de OAB"""
-    normalized = normalize_oab(oab)
-    
-    # Se tem apenas números, adiciona /SP como padrão
-    if len(normalized) == 6 and normalized.isdigit():
-        return f"/oab {normalized}/SP"
-    
-    # Se já tem formato completo
-    if len(normalized) == 8:
-        numbers = normalized[:6]
-        letters = normalized[6:8]
-        return f"/oab {numbers}/{letters}"
-    
-    # Se tem 7 caracteres
-    elif len(normalized) == 7:
-        numbers = normalized[:6]
-        letter = normalized[6]
-        return f"/oab {numbers}/{letter}"
-    
-    return f"/oab {normalized}"
 
 # ----------------------
 # FastAPI Setup
@@ -236,44 +167,25 @@ def form(request: Request):
 async def do_consulta(request: Request):
     form_data = await request.form()
     identificador = str(form_data.get("identificador", ""))
-    tipo_consulta = str(form_data.get("tipo_consulta", "cpf_cnpj"))
-    
     if not identificador:
         return templates.TemplateResponse(
             "modern-form.html",
             {"request": request, "erro": "Campo identificador é obrigatório.", "reuse_value": identificador}
         )
-    
-    # Processa baseado no tipo de consulta
-    if tipo_consulta == "oab":
-        # Consulta OAB
-        oab_normalized = normalize_oab(identificador)
-        if not is_oab(oab_normalized):
-            return templates.TemplateResponse(
-                "modern-form.html",
-                {"request": request, "erro": "OAB inválida. Use formato: 123456/SP ou 123456SP", "reuse_value": identificador}
-            )
-        cmd = get_oab_command(oab_normalized)
-        tipo_consulta_str = "OAB"
+    idn = normalize(identificador)
+    if is_cpf(idn):
+        cmd = f"/cpf3 {idn}"
+    elif is_cnpj(idn):
+        cmd = f"/cnpj {idn}"
     else:
-        # Consulta CPF/CNPJ
-        idn = normalize(identificador)
-        if is_cpf(idn):
-            cmd = f"/cpf3 {idn}"
-            tipo_consulta_str = "CPF"
-        elif is_cnpj(idn):
-            cmd = f"/cnpj {idn}"
-            tipo_consulta_str = "CNPJ"
-        else:
-            return templates.TemplateResponse(
-                "modern-form.html",
-                {"request": request, "erro": "Identificador inválido. Use CPF (11 dígitos), CNPJ (14 dígitos) ou OAB (123456/SP).", "reuse_value": identificador}
-            )
-    
+        return templates.TemplateResponse(
+            "modern-form.html",
+            {"request": request, "erro": "Identificador inválido. Use CPF (11 dígitos) ou CNPJ (14 dígitos).", "reuse_value": identificador}
+        )
     resultado = await consulta_telegram(cmd)
     return templates.TemplateResponse(
         "modern-result.html",
-        {"request": request, "mensagem": f"Consulta {tipo_consulta_str} para {identificador}", "resultado": resultado, "identifier": identificador}
+        {"request": request, "mensagem": f"Consulta para {identificador}", "resultado": resultado, "identifier": idn}
     )
 
 @app.get("/historico", response_class=HTMLResponse)
