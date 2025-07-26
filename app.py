@@ -10,6 +10,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from telethon import TelegramClient, events
 
+# Importação do módulo OAB
+try:
+    from consulta_oab import consulta_oab_completa
+except ImportError:
+    print("⚠️ Módulo consulta_oab não encontrado. Consultas OAB não estarão disponíveis.")
+
 # ----------------------
 # Configurações de diretórios
 # ----------------------
@@ -188,6 +194,60 @@ async def do_consulta(request: Request):
         {"request": request, "mensagem": f"Consulta para {identificador}", "resultado": resultado, "identifier": idn}
     )
 
+# ----------------------
+# Rotas OAB
+# ----------------------
+@app.get("/consulta-oab", response_class=HTMLResponse)
+def form_oab(request: Request):
+    """Página de consulta OAB"""
+    return templates.TemplateResponse("consulta-oab.html", {"request": request})
+
+@app.post("/consulta-oab", response_class=HTMLResponse)
+async def do_consulta_oab(request: Request):
+    """Processa consulta OAB"""
+    try:
+        form_data = await request.form()
+        
+        nome = str(form_data.get("nome", "")).strip()
+        inscricao = str(form_data.get("inscricao", "")).strip()
+        estado = str(form_data.get("estado", "SP"))
+        tipo = str(form_data.get("tipo", "Advogado"))
+        
+        if not nome and not inscricao:
+            return templates.TemplateResponse(
+                "consulta-oab.html",
+                {"request": request, "erro": "Preencha nome OU inscrição."}
+            )
+        
+        # Define o identificador
+        identificador = inscricao if inscricao else nome
+        
+        # Verifica se o módulo OAB está disponível
+        if 'consulta_oab_completa' not in globals():
+            return templates.TemplateResponse(
+                "consulta-oab.html",
+                {"request": request, "erro": "Módulo OAB não disponível. Verifique a instalação."}
+            )
+        
+        # Executa a consulta
+        resultado = await consulta_oab_completa(identificador, estado, tipo)
+        
+        return templates.TemplateResponse(
+            "modern-result.html",
+            {
+                "request": request,
+                "mensagem": f"Consulta OAB para {identificador}",
+                "resultado": resultado,
+                "identifier": identificador
+            }
+        )
+        
+    except Exception as e:
+        return templates.TemplateResponse(
+            "consulta-oab.html",
+            {"request": request, "erro": f"Erro na consulta: {str(e)}"}
+        )
+
 @app.get("/historico", response_class=HTMLResponse)
 def historico(request: Request):
     return templates.TemplateResponse("historico.html", {"request": request})
@@ -197,7 +257,6 @@ def limpar_historico(request: Request):
     cursor.execute("DELETE FROM searches")
     conn.commit()
     return templates.TemplateResponse("modern-form.html", {"request": request})
-
 
 if __name__ == "__main__":
     import uvicorn
