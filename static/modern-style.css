@@ -340,6 +340,48 @@ button:hover, .btn:hover {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--foreground);
+  font-size: 0.9rem;
+}
+
+.form-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--input);
+  color: var(--foreground);
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px rgba(255, 224, 130, 0.1);
+}
+
+.form-select:hover {
+  border-color: var(--accent);
+}
+
+body.dark .form-select {
+  background: var(--input);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+body.dark .form-select:focus {
+  border-color: var(--ring);
+}
+
 .error-message {
   color: var(--destructive);
   font-size: 0.875rem;

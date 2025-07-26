@@ -6,7 +6,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="google-adsense-account" content="ca-pub-8516606447752216">
-  <title> Detetive - Consulta CPF/CNPJ</title>
+  <title> Detetive - Consulta CPF/CNPJ/OAB</title>
   <link rel="stylesheet" href="/static/modern-style.css">
   <link rel="icon" href="/static/favicon.ico">
 </head>
@@ -23,10 +23,19 @@
       <div class="icon">
         <h1>Detetive</h1>
       </div>
-      <p class="subtitle">Sistema de consulta de CPF e CNPJ</p>
+      <p class="subtitle">Sistema de consulta de CPF, CNPJ e OAB</p>
     </div>
     <!-- Form -->
     <form class="investigation-form" action="/consulta" method="post">
+      <!-- Tipo de Consulta -->
+      <div class="form-group">
+        <label for="tipo_consulta" class="form-label">Tipo de Consulta:</label>
+        <select id="tipo_consulta" name="tipo_consulta" class="form-select" onchange="updatePlaceholder()">
+          <option value="cpf_cnpj">CPF/CNPJ</option>
+          <option value="oab">OAB (Advogado)</option>
+        </select>
+      </div>
+      <!-- Campo de Identificação -->
       <div class="form-group">
         <input 
           type="text" 
@@ -36,7 +45,7 @@
           placeholder="Ex: 012.345.678-90 ou 12.345.678/0001-90"
           value="{{ reuse_value or '' }}"
           required
-          oninput="formatCpfCnpj(this)"
+          oninput="formatInput(this)"
         >
         {% if erro %}
           <p class="error-message">{{ erro }}</p>
@@ -52,6 +61,66 @@
     </div>
   </div>
   <script>
+    // Função para atualizar placeholder baseado no tipo de consulta
+    function updatePlaceholder() {
+      const tipoConsulta = document.getElementById('tipo_consulta').value;
+      const input = document.getElementById('identificador');
+      
+      if (tipoConsulta === 'oab') {
+        input.placeholder = 'Ex: 123456/SP ou 123456SP';
+        input.value = '';
+      } else {
+        input.placeholder = 'Ex: 012.345.678-90 ou 12.345.678/0001-90';
+        input.value = '';
+      }
+    }
+    
+    // Função para formatar entrada baseada no tipo
+    function formatInput(input) {
+      const tipoConsulta = document.getElementById('tipo_consulta').value;
+      
+      if (tipoConsulta === 'oab') {
+        formatOAB(input);
+      } else {
+        formatCpfCnpj(input);
+      }
+    }
+    
+    // Formatação para OAB
+    function formatOAB(input) {
+      let value = input.value.replace(/\D/g, '');
+      
+      if (value.length > 6) {
+        value = value.substring(0, 6) + '/' + value.substring(6);
+      }
+      
+      if (value.length > 9) {
+        value = value.substring(0, 9);
+      }
+      
+      input.value = value;
+    }
+    
+    // Formatação para CPF/CNPJ (função existente)
+    function formatCpfCnpj(input) {
+      let value = input.value.replace(/\D/g, '');
+      
+      if (value.length <= 11) {
+        // Formatação CPF
+        value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        value = value.replace(/(\d{3})(\d{3})(\d{3})/, '$1.$2.$3');
+        value = value.replace(/(\d{3})(\d{3})/, '$1.$2');
+      } else {
+        // Formatação CNPJ
+        value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+        value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})/, '$1.$2.$3/$4');
+        value = value.replace(/(\d{2})(\d{3})(\d{3})/, '$1.$2.$3');
+        value = value.replace(/(\d{2})(\d{3})/, '$1.$2');
+      }
+      
+      input.value = value;
+    }
+    
     window.toggleTheme = function() {
       const body = document.body;
       const themeIcon = document.getElementById('theme-icon');
@@ -79,6 +148,9 @@
         themeIcon.textContent = '🌙';
         themeIcon.style.color = '#fff';
       }
+      
+      // Inicializar placeholder
+      updatePlaceholder();
     });
   </script>
 </body>
