@@ -2,6 +2,8 @@ import os
 import re
 import asyncio
 import sqlite3
+import threading
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -56,6 +58,9 @@ API_HASH = '387f7520aae351ddc83fb457cdb60085'
 SESSION_NAME = 'bot_session'
 GROUP_ID = -1002874013146
 
+# Lock para sincronizar acesso ao Telethon
+telegram_lock = threading.Lock()
+
 # ----------------------
 # Validação CPF/CNPJ
 # ----------------------
@@ -85,28 +90,67 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 # ----------------------
 # Consulta no Telegram via Telethon
 # ----------------------
-async def consulta_telegram(cmd: str) -> str:
-    client = TelegramClient(SESSION_NAME, API_ID, API_HASH)
-    response_text = None
-
-    async def handler(event):
-        nonlocal response_text
-        response_text = re.sub(r"🔛\s*BY:\s*@Skynet08Robot", "", event.raw_text, flags=re.IGNORECASE)
-        await client.disconnect()
-
-    client.add_event_handler(handler, events.NewMessage(chats=GROUP_ID))
-
-    await client.start()
-    await client.send_message(GROUP_ID, cmd)
-
+@asynccontextmanager
+async def get_telegram_client():
+    """Context manager para gerenciar conexões do Telethon de forma segura"""
+    client = None
     try:
-        # Aguarda até receber uma resposta ou time-out
-        await asyncio.wait_for(client.run_until_disconnected(), timeout=30)
-    except asyncio.TimeoutError:
-        await client.disconnect()
-        return "❌ Timeout aguardando resposta do bot."
+        # Usa lock para evitar conflitos de acesso ao arquivo de sessão
+        with telegram_lock:
+            client = TelegramClient(SESSION_NAME, API_ID, API_HASH)
+            await client.connect()
+            
+            # Se não estiver autorizado, tenta conectar
+            if not await client.is_user_authorized():
+                await client.disconnect()
+                raise Exception("Cliente Telegram não autorizado. Execute o setup_login.py primeiro.")
+                
+            yield client
+    except Exception as e:
+        if client:
+            try:
+                await client.disconnect()
+            except:
+                pass
+        raise e
+    finally:
+        if client:
+            try:
+                await client.disconnect()
+            except:
+                pass
 
-    return response_text or "❌ Nenhuma resposta recebida."
+async def consulta_telegram(cmd: str) -> str:
+    """Executa consulta no Telegram com tratamento robusto de erros"""
+    try:
+        async with get_telegram_client() as client:
+            response_text = None
+            response_received = asyncio.Event()
+
+            async def handler(event):
+                nonlocal response_text
+                response_text = re.sub(r"🔛\s*BY:\s*@Skynet08Robot", "", event.raw_text, flags=re.IGNORECASE)
+                response_received.set()
+
+            client.add_event_handler(handler, events.NewMessage(chats=GROUP_ID))
+
+            # Envia a mensagem
+            await client.send_message(GROUP_ID, cmd)
+
+            # Aguarda resposta com timeout
+            try:
+                await asyncio.wait_for(response_received.wait(), timeout=30)
+                return response_text or "❌ Nenhuma resposta recebida."
+            except asyncio.TimeoutError:
+                return "❌ Timeout aguardando resposta do bot."
+                
+    except sqlite3.OperationalError as e:
+        if "database is locked" in str(e):
+            return "❌ Erro: Banco de dados bloqueado. Tente novamente em alguns segundos."
+        else:
+            return f"❌ Erro de banco de dados: {str(e)}"
+    except Exception as e:
+        return f"❌ Erro na consulta: {str(e)}"
 
 # ----------------------
 # Rotas
