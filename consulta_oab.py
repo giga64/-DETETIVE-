@@ -231,19 +231,36 @@ class ConsultaOABAutomatizada:
             print(f"⚠️ Aviso: Não foi possível resolver captcha automaticamente: {e}")
     
     async def _extrair_resultado(self) -> str:
-        """Extrai o resultado da página"""
+        """Extrai o resultado da página incluindo informações detalhadas"""
         try:
             # Aguarda carregamento da página
             await self.page.wait_for_timeout(3000)
             
-            # Procura por elementos de resultado
+            # Primeiro, tenta extrair resultados básicos
+            resultado_basico = await self._extrair_resultado_basico()
+            
+            # Depois, tenta clicar nos resultados para obter detalhes
+            resultado_detalhado = await self._extrair_resultado_detalhado()
+            
+            # Combina os resultados
+            if resultado_detalhado:
+                return f"{resultado_basico}\n\n{resultado_detalhado}"
+            else:
+                return resultado_basico
+            
+        except Exception as e:
+            return f"Erro ao extrair resultado: {str(e)}"
+    
+    async def _extrair_resultado_basico(self) -> str:
+        """Extrai o resultado básico da página"""
+        try:
+            # Procura pela seção RESULTADO
             resultado_selectors = [
                 '.resultado',
-                '.search-result', 
+                '#resultado',
+                'div:has-text("RESULTADO")',
                 'table',
-                '.content',
-                '.advogado-info',
-                '#resultado'
+                '.search-result'
             ]
             
             for selector in resultado_selectors:
@@ -256,12 +273,117 @@ class ConsultaOABAutomatizada:
                 except:
                     continue
             
-            # Se não encontrar, pega todo o conteúdo da página
+            # Se não encontrar seção específica, pega conteúdo geral
             conteudo = await self.page.content()
             return self._extrair_texto_relevante(conteudo)
             
         except Exception as e:
-            return f"Erro ao extrair resultado: {str(e)}"
+            return f"Erro ao extrair resultado básico: {str(e)}"
+    
+    async def _extrair_resultado_detalhado(self) -> str:
+        """Extrai informações detalhadas clicando nos resultados"""
+        try:
+            # Procura por links ou elementos clicáveis nos resultados
+            clickable_selectors = [
+                'a[href*="detalhes"]',
+                'a[href*="ficha"]',
+                '.resultado a',
+                'table a',
+                '.search-result a',
+                'tr[onclick]',
+                '.clickable'
+            ]
+            
+            detalhes_encontrados = []
+            
+            for selector in clickable_selectors:
+                try:
+                    elementos = await self.page.query_selector_all(selector)
+                    for i, elemento in enumerate(elementos[:3]):  # Limita a 3 cliques
+                        try:
+                            # Clica no elemento
+                            await elemento.click()
+                            await self.page.wait_for_timeout(2000)
+                            
+                            # Extrai informações do pop-up ou nova página
+                            detalhes = await self._extrair_detalhes_popup()
+                            if detalhes:
+                                detalhes_encontrados.append(f"--- DETALHES {i+1} ---\n{detalhes}")
+                            
+                            # Fecha pop-up se houver
+                            await self._fechar_popup()
+                            
+                        except Exception as e:
+                            print(f"Erro ao clicar no elemento {i}: {e}")
+                            continue
+                            
+                except:
+                    continue
+            
+            if detalhes_encontrados:
+                return "\n\n".join(detalhes_encontrados)
+            else:
+                return ""
+                
+        except Exception as e:
+            return f"Erro ao extrair detalhes: {str(e)}"
+    
+    async def _extrair_detalhes_popup(self) -> str:
+        """Extrai informações detalhadas do pop-up"""
+        try:
+            # Procura por pop-ups ou modais
+            popup_selectors = [
+                '.modal',
+                '.popup',
+                '.dialog',
+                '[role="dialog"]',
+                '.ficha',
+                '.detalhes'
+            ]
+            
+            for selector in popup_selectors:
+                try:
+                    popup = await self.page.query_selector(selector)
+                    if popup:
+                        texto = await popup.inner_text()
+                        if texto and len(texto.strip()) > 50:
+                            return self._limpar_texto(texto)
+                except:
+                    continue
+            
+            # Se não encontrar pop-up, tenta extrair da página atual
+            conteudo = await self.page.content()
+            return self._extrair_texto_relevante(conteudo)
+            
+        except Exception as e:
+            return f"Erro ao extrair pop-up: {str(e)}"
+    
+    async def _fechar_popup(self):
+        """Tenta fechar pop-ups abertos"""
+        try:
+            # Procura por botões de fechar
+            close_selectors = [
+                '.close',
+                '.fechar',
+                '[aria-label="Close"]',
+                '.modal .close',
+                '.popup .close',
+                'button:has-text("X")',
+                'button:has-text("Fechar")'
+            ]
+            
+            for selector in close_selectors:
+                try:
+                    close_btn = await self.page.query_selector(selector)
+                    if close_btn:
+                        await close_btn.click()
+                        await self.page.wait_for_timeout(1000)
+                        break
+                except:
+                    continue
+                    
+        except Exception as e:
+            print(f"Erro ao fechar pop-up: {e}")
     
     def _limpar_texto(self, texto: str) -> str:
         """Limpa e formata o texto extraído"""
@@ -288,7 +410,7 @@ class ConsultaOABAutomatizada:
         
         # Pega linhas relevantes
         linhas = [linha.strip() for linha in texto.split('\n') if linha.strip()]
-        return '\n'.join(linhas[:30])  # Primeiras 30 linhas
+        return '\n'.join(linhas[:50])  # Primeiras 50 linhas
 
 # Função principal para uso no app.py
 async def consulta_oab_completa(identificador: str, estado: str = "SP", tipo: str = "Advogado") -> str:

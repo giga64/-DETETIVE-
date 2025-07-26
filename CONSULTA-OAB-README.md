@@ -2,7 +2,7 @@
 
 ## 📋 **Visão Geral**
 
-O sistema agora inclui **consultas automatizadas no site da OAB** (https://cna.oab.org.br/), permitindo buscar advogados por nome ou número de inscrição.
+O sistema agora inclui **consultas automatizadas no site da OAB** (https://cna.oab.org.br/), permitindo buscar advogados por nome ou número de inscrição e **extrair informações detalhadas** como endereço, telefone, situação profissional e mais.
 
 ## 🚀 **Funcionalidades**
 
@@ -17,6 +17,19 @@ O sistema agora inclui **consultas automatizadas no site da OAB** (https://cna.o
 - **Seleção automática** de estado e tipo
 - **Resolução de captcha** (quando possível)
 - **Extração inteligente** de resultados
+- **Captura de informações detalhadas** do pop-up da CNA
+
+### 📊 **Informações Extraídas**
+O sistema captura automaticamente:
+- **Nome completo** do advogado
+- **Número de inscrição** OAB
+- **Estado/Seccional** de registro
+- **Tipo de inscrição** (Advogado, Estagiário, etc.)
+- **Endereço profissional** completo
+- **Telefone profissional**
+- **CEP** do endereço
+- **Situação** da inscrição (Regular, Irregular, etc.)
+- **Informações adicionais** do pop-up da CNA
 
 ## 📁 **Arquivos Criados**
 
@@ -25,6 +38,7 @@ O sistema agora inclui **consultas automatizadas no site da OAB** (https://cna.o
 ├── consulta_oab.py              # Módulo principal de consulta
 ├── setup_oab.py                 # Script de configuração
 ├── install_playwright_render.py # Instalação Playwright para Render
+├── test_oab_extraction.py       # Script de teste de extração
 ├── build.sh                     # Script de build para Render
 ├── render.yaml                  # Configuração Render
 ├── templates/
@@ -53,7 +67,12 @@ python install_playwright_render.py
 python setup_oab.py
 ```
 
-#### **4. Iniciar Aplicação**
+#### **4. Testar Extração (Opcional)**
+```bash
+python test_oab_extraction.py
+```
+
+#### **5. Iniciar Aplicação**
 ```bash
 python app.py
 ```
@@ -92,22 +111,49 @@ O sistema detecta automaticamente se está no Render e:
 
 2. **Clique em:** "🔍 Consultar OAB"
 
-3. **Aguarde** o resultado automático
+3. **Aguarde** o resultado automático com informações detalhadas
 
 ## 🔍 **Exemplos de Consulta**
 
 ### **Por Nome:**
 ```
-Nome: João Silva Santos
-Estado: SP
+Nome: MARCOS DÉLLI RIBEIRO RODRIGUES
+Estado: RN
 Tipo: Advogado
 ```
 
 ### **Por Inscrição:**
 ```
-Inscrição: 123456
-Estado: RJ
+Inscrição: 5553
+Estado: RN
 Tipo: Advogado
+```
+
+### **Resultado Esperado:**
+```
+🔍 CONSULTA OAB - NOME
+📋 Identificador: MARCOS DÉLLI RIBEIRO RODRIGUES
+🏛️ Estado: RN
+👤 Tipo: Advogado
+🌐 Fonte: OAB - https://cna.oab.org.br/
+
+RESULTADO
+Nome: MARCOS DÉLLI RIBEIRO RODRIGUES
+Tipo: ADVOGADO
+Inscrição: 5553
+UF: RN
+
+--- DETALHES 1 ---
+Nome: MARCOS DÉLLI RIBEIRO RODRIGUES
+Inscrição: 5553
+Profissão: ADVOGADO
+Seccional: RN
+Subseção: CONSELHO SECCIONAL - RIO GRANDE DO NORTE
+Endereço Profissional: RUA AÇU, Nº 572, TIROL
+Cidade/Estado: NATAL - RN
+CEP: 59020110
+Telefone Profissional: (84) 3221-5400
+Situação: SITUAÇÃO REGULAR
 ```
 
 ## ⚙️ **Configuração Avançada**
@@ -120,6 +166,14 @@ Tipo: Advogado
 - **Advogado:** Inscrição regular
 - **Estagiário:** Estagiário de advocacia
 - **Suplementar:** Inscrição suplementar
+
+### **Processo de Extração:**
+1. **Consulta básica** no formulário da CNA
+2. **Extração** dos resultados iniciais
+3. **Clique automático** nos resultados para abrir detalhes
+4. **Captura** das informações do pop-up
+5. **Fechamento** automático dos pop-ups
+6. **Combinação** dos dados básicos e detalhados
 
 ## 🔧 **Troubleshooting**
 
@@ -152,6 +206,11 @@ python setup_oab.py
 - Tente novamente em alguns minutos
 - O site pode estar temporariamente indisponível
 
+### **Erro: "Não conseguiu extrair detalhes"**
+- O sistema pode não conseguir clicar nos resultados
+- Verifique se o site mudou a estrutura
+- Execute o teste: `python test_oab_extraction.py`
+
 ## 📊 **Logs e Monitoramento**
 
 ### **Logs de Inicialização:**
@@ -164,12 +223,12 @@ python setup_oab.py
 ### **Logs de Consulta:**
 ```
 🔍 CONSULTA OAB - NOME
-📋 Identificador: João Silva Santos
-🏛️ Estado: SP
+📋 Identificador: MARCOS DÉLLI RIBEIRO RODRIGUES
+🏛️ Estado: RN
 👤 Tipo: Advogado
 🌐 Fonte: OAB - https://cna.oab.org.br/
 
-[Resultado da consulta...]
+[Resultado detalhado com informações completas...]
 ```
 
 ### **Logs de Erro:**
@@ -221,6 +280,11 @@ python setup_oab.py
 - Primeira execução pode ser mais lenta
 - Dependências são instaladas automaticamente
 
+### **Extração de Detalhes:**
+- Depende da estrutura atual do site
+- Pode não funcionar se o site mudar
+- Pop-ups podem não abrir corretamente
+
 ## 🚀 **Próximos Passos**
 
 ### **Melhorias Futuras:**
@@ -229,6 +293,8 @@ python setup_oab.py
 3. **Validação avançada** de nomes
 4. **Histórico específico** para OAB
 5. **Notificações** de novos resultados
+6. **Extração de fotos** dos advogados
+7. **Informações de sociedade** (se disponível)
 
 ### **Expansão:**
 1. **Outros sites** de consulta
@@ -243,11 +309,13 @@ python setup_oab.py
 3. **Timeout:** Verifique conexão
 4. **Erro de site:** Aguarde e tente novamente
 5. **Erro no Render:** Verifique logs de build
+6. **Detalhes não extraídos:** Execute test_oab_extraction.py
 
 ### **Contato:**
 - Verifique os logs da aplicação
 - Execute `python install_playwright_render.py` se necessário
 - Monitore o console para erros
+- Use `python test_oab_extraction.py` para testar extração
 
 ---
 
@@ -256,10 +324,11 @@ python setup_oab.py
 Agora você tem um sistema completo que:
 - ✅ **Consulta CPF/CNPJ** via Telegram
 - ✅ **Consulta OAB** automatizada
+- ✅ **Extração detalhada** de informações
 - ✅ **Histórico unificado**
 - ✅ **Interface moderna**
 - ✅ **Tema escuro/claro**
 - ✅ **Navegação intuitiva**
 - ✅ **Compatível com Render**
 
-**🚀 O Detetive agora é uma ferramenta completa de investigação digital!** 
+**🚀 O Detetive agora é uma ferramenta completa de investigação digital com extração detalhada da CNA!** 
