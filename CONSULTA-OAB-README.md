@@ -24,6 +24,9 @@ O sistema agora inclui **consultas automatizadas no site da OAB** (https://cna.o
 -DETETIVE-/
 ├── consulta_oab.py              # Módulo principal de consulta
 ├── setup_oab.py                 # Script de configuração
+├── install_playwright_render.py # Instalação Playwright para Render
+├── build.sh                     # Script de build para Render
+├── render.yaml                  # Configuração Render
 ├── templates/
 │   └── consulta-oab.html        # Interface de consulta OAB
 ├── static/
@@ -33,26 +36,51 @@ O sistema agora inclui **consultas automatizadas no site da OAB** (https://cna.o
 
 ## 🛠️ **Instalação e Configuração**
 
-### **1. Instalar Dependências**
+### **Para Ambiente Local:**
+
+#### **1. Instalar Dependências**
 ```bash
-pip install playwright
-playwright install chromium
+pip install -r requirements.txt
 ```
 
-### **2. Configurar Perfil OAB**
+#### **2. Instalar Playwright**
+```bash
+python install_playwright_render.py
+```
+
+#### **3. Configurar Perfil OAB (Opcional)**
 ```bash
 python setup_oab.py
 ```
 
-### **3. Iniciar Aplicação**
+#### **4. Iniciar Aplicação**
 ```bash
 python app.py
 ```
 
+### **Para Render (Produção):**
+
+#### **1. Configuração Automática**
+O Render irá automaticamente:
+- Instalar dependências do `requirements.txt`
+- Instalar Playwright e Chromium
+- Configurar dependências do sistema
+
+#### **2. Arquivos de Configuração**
+- `render.yaml` - Configuração do serviço
+- `build.sh` - Script de build personalizado
+- `requirements.txt` - Dependências Python
+
+#### **3. Deploy Automático**
+O sistema detecta automaticamente se está no Render e:
+- Instala Playwright se necessário
+- Configura argumentos específicos para o ambiente
+- Trata erros de instalação
+
 ## 🎯 **Como Usar**
 
 ### **Acessar Consulta OAB**
-1. Acesse: `http://localhost:8000/consulta-oab`
+1. Acesse: `http://localhost:8000/consulta-oab` (local)
 2. Ou clique em "🏛️ Consulta OAB" na página principal
 
 ### **Fazer Consulta**
@@ -101,13 +129,19 @@ Tipo: Advogado
 ls consulta_oab.py
 
 # Reinstale dependências
-pip install playwright
-playwright install chromium
+pip install -r requirements.txt
+python install_playwright_render.py
+```
+
+### **Erro: "Executable doesn't exist" (Render)**
+```bash
+# O sistema tenta instalar automaticamente
+# Se persistir, verifique os logs do Render
 ```
 
 ### **Erro: "Não foi possível resolver captcha"**
 ```bash
-# Execute o setup novamente
+# Execute o setup novamente (local)
 python setup_oab.py
 
 # Configure manualmente o captcha
@@ -119,6 +153,13 @@ python setup_oab.py
 - O site pode estar temporariamente indisponível
 
 ## 📊 **Logs e Monitoramento**
+
+### **Logs de Inicialização:**
+```
+✅ Módulo OAB carregado com sucesso!
+✅ Playwright já está instalado!
+🚀 Sistema pronto para uso.
+```
 
 ### **Logs de Consulta:**
 ```
@@ -134,6 +175,7 @@ python setup_oab.py
 ### **Logs de Erro:**
 ```
 ❌ Erro na consulta OAB: [Descrição do erro]
+❌ Erro crítico na consulta OAB: [Descrição do erro]
 ```
 
 ## 🎨 **Interface**
@@ -175,6 +217,10 @@ python setup_oab.py
 - Mudanças no site podem quebrar a automação
 - Monitoramento necessário
 
+### **Ambiente Render:**
+- Primeira execução pode ser mais lenta
+- Dependências são instaladas automaticamente
+
 ## 🚀 **Próximos Passos**
 
 ### **Melhorias Futuras:**
@@ -196,10 +242,11 @@ python setup_oab.py
 2. **Captcha não resolvido:** Execute setup_oab.py
 3. **Timeout:** Verifique conexão
 4. **Erro de site:** Aguarde e tente novamente
+5. **Erro no Render:** Verifique logs de build
 
 ### **Contato:**
 - Verifique os logs da aplicação
-- Execute `python setup_oab.py` se necessário
+- Execute `python install_playwright_render.py` se necessário
 - Monitore o console para erros
 
 ---
@@ -213,5 +260,6 @@ Agora você tem um sistema completo que:
 - ✅ **Interface moderna**
 - ✅ **Tema escuro/claro**
 - ✅ **Navegação intuitiva**
+- ✅ **Compatível com Render**
 
 **🚀 O Detetive agora é uma ferramenta completa de investigação digital!** 

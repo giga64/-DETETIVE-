@@ -7,8 +7,19 @@ https://cna.oab.org.br/
 import asyncio
 import re
 import time
-from playwright.async_api import async_playwright
+import subprocess
+import sys
+import os
 from typing import Optional, Dict, Any
+
+# Tenta importar Playwright, se não conseguir, instala
+try:
+    from playwright.async_api import async_playwright
+except ImportError:
+    print("📦 Instalando Playwright...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "playwright"])
+    subprocess.check_call([sys.executable, "-m", "playwright", "install", "chromium"])
+    from playwright.async_api import async_playwright
 
 class ConsultaOABAutomatizada:
     def __init__(self, profile_dir: str = "oab_profile"):
@@ -49,27 +60,70 @@ class ConsultaOABAutomatizada:
         
     async def __aenter__(self):
         """Context manager entry"""
-        self.playwright = await async_playwright().start()
-        self.browser = await self.playwright.chromium.launch_persistent_context(
-            user_data_dir=self.profile_dir,
-            headless=True  # True para produção
-        )
-        self.page = self.browser.pages[0] if self.browser.pages else await self.browser.new_page()
-        return self
+        try:
+            self.playwright = await async_playwright().start()
+            
+            # Configurações específicas para Render
+            browser_args = [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--disable-gpu'
+            ]
+            
+            self.browser = await self.playwright.chromium.launch_persistent_context(
+                user_data_dir=self.profile_dir,
+                headless=True,
+                args=browser_args,
+                ignore_default_args=['--disable-extensions']
+            )
+            self.page = self.browser.pages[0] if self.browser.pages else await self.browser.new_page()
+            return self
+            
+        except Exception as e:
+            print(f"❌ Erro ao inicializar Playwright: {e}")
+            # Tenta instalar o Playwright se necessário
+            try:
+                print("📦 Tentando instalar Playwright...")
+                subprocess.check_call([sys.executable, "-m", "playwright", "install", "chromium"])
+                # Tenta novamente
+                self.playwright = await async_playwright().start()
+                self.browser = await self.playwright.chromium.launch_persistent_context(
+                    user_data_dir=self.profile_dir,
+                    headless=True,
+                    args=browser_args,
+                    ignore_default_args=['--disable-extensions']
+                )
+                self.page = self.browser.pages[0] if self.browser.pages else await self.browser.new_page()
+                return self
+            except Exception as e2:
+                print(f"❌ Erro persistente: {e2}")
+                raise e2
         
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit"""
         if self.browser:
-            await self.browser.close()
+            try:
+                await self.browser.close()
+            except:
+                pass
         if hasattr(self, 'playwright'):
-            await self.playwright.stop()
+            try:
+                await self.playwright.stop()
+            except:
+                pass
     
     async def consultar_por_nome(self, nome: str, estado: str = "SP", tipo: str = "Advogado") -> Dict[str, Any]:
         """Consulta advogado por nome com preenchimento completo"""
         try:
             # Acessa o site da OAB
-            await self.page.goto("https://cna.oab.org.br/")
-            await self.page.wait_for_load_state("networkidle")
+            await self.page.goto("https://cna.oab.org.br/", wait_until="networkidle", timeout=30000)
+            
+            # Aguarda carregamento da página
+            await self.page.wait_for_timeout(3000)
             
             # Preenche o nome
             await self.page.fill('input[name="nome"]', nome)
@@ -113,8 +167,8 @@ class ConsultaOABAutomatizada:
     async def consultar_por_inscricao(self, inscricao: str, estado: str = "SP", tipo: str = "Advogado") -> Dict[str, Any]:
         """Consulta advogado por inscrição com preenchimento completo"""
         try:
-            await self.page.goto("https://cna.oab.org.br/")
-            await self.page.wait_for_load_state("networkidle")
+            await self.page.goto("https://cna.oab.org.br/", wait_until="networkidle", timeout=30000)
+            await self.page.wait_for_timeout(3000)
             
             # Preenche a inscrição
             await self.page.fill('input[name="inscricao"]', inscricao)
@@ -239,15 +293,16 @@ class ConsultaOABAutomatizada:
 # Função principal para uso no app.py
 async def consulta_oab_completa(identificador: str, estado: str = "SP", tipo: str = "Advogado") -> str:
     """Função principal para consulta OAB completa"""
-    async with ConsultaOABAutomatizada() as oab:
-        # Detecta se é inscrição ou nome
-        if re.match(r'^\d+$', identificador):
-            resultado = await oab.consultar_por_inscricao(identificador, estado, tipo)
-        else:
-            resultado = await oab.consultar_por_nome(identificador, estado, tipo)
-        
-        if resultado["sucesso"]:
-            return f"""
+    try:
+        async with ConsultaOABAutomatizada() as oab:
+            # Detecta se é inscrição ou nome
+            if re.match(r'^\d+$', identificador):
+                resultado = await oab.consultar_por_inscricao(identificador, estado, tipo)
+            else:
+                resultado = await oab.consultar_por_nome(identificador, estado, tipo)
+            
+            if resultado["sucesso"]:
+                return f"""
 🔍 CONSULTA OAB - {resultado['tipo'].upper()}
 📋 Identificador: {resultado['identificador']}
 🏛️ Estado: {resultado['estado']}
@@ -255,6 +310,8 @@ async def consulta_oab_completa(identificador: str, estado: str = "SP", tipo: st
 🌐 Fonte: {resultado['fonte']}
 
 {resultado['resultado']}
-            """.strip()
-        else:
-            return f"❌ Erro na consulta OAB: {resultado.get('erro', 'Erro desconhecido')}" 
+                """.strip()
+            else:
+                return f"❌ Erro na consulta OAB: {resultado.get('erro', 'Erro desconhecido')}"
+    except Exception as e:
+        return f"❌ Erro crítico na consulta OAB: {str(e)}" 

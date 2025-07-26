@@ -3,6 +3,8 @@ import re
 import asyncio
 import sqlite3
 import threading
+import subprocess
+import sys
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse
@@ -10,11 +12,40 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from telethon import TelegramClient, events
 
-# Importação do módulo OAB
+# Importação do módulo OAB com verificação
+OAB_AVAILABLE = False
 try:
     from consulta_oab import consulta_oab_completa
-except ImportError:
-    print("⚠️ Módulo consulta_oab não encontrado. Consultas OAB não estarão disponíveis.")
+    OAB_AVAILABLE = True
+    print("✅ Módulo OAB carregado com sucesso!")
+except ImportError as e:
+    print(f"⚠️ Módulo consulta_oab não encontrado: {e}")
+    print("💡 Consultas OAB não estarão disponíveis.")
+except Exception as e:
+    print(f"⚠️ Erro ao carregar módulo OAB: {e}")
+    print("💡 Consultas OAB não estarão disponíveis.")
+
+# Função para verificar/instalar Playwright
+def ensure_playwright():
+    """Verifica se o Playwright está instalado e instala se necessário"""
+    try:
+        from playwright.async_api import async_playwright
+        print("✅ Playwright já está instalado!")
+        return True
+    except ImportError:
+        print("📦 Playwright não encontrado. Tentando instalar...")
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "playwright"])
+            subprocess.check_call([sys.executable, "-m", "playwright", "install", "chromium"])
+            print("✅ Playwright instalado com sucesso!")
+            return True
+        except Exception as e:
+            print(f"❌ Erro ao instalar Playwright: {e}")
+            return False
+
+# Verifica Playwright na inicialização
+if OAB_AVAILABLE:
+    ensure_playwright()
 
 # ----------------------
 # Configurações de diretórios
@@ -223,10 +254,10 @@ async def do_consulta_oab(request: Request):
         identificador = inscricao if inscricao else nome
         
         # Verifica se o módulo OAB está disponível
-        if 'consulta_oab_completa' not in globals():
+        if not OAB_AVAILABLE:
             return templates.TemplateResponse(
                 "consulta-oab.html",
-                {"request": request, "erro": "Módulo OAB não disponível. Verifique a instalação."}
+                {"request": request, "erro": "Módulo OAB não disponível. Verifique a instalação do Playwright."}
             )
         
         # Executa a consulta
