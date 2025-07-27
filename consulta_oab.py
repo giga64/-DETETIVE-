@@ -71,15 +71,31 @@ class ConsultaOABAutomatizada:
                 '--disable-accelerated-2d-canvas',
                 '--no-first-run',
                 '--no-zygote',
-                '--disable-gpu'
+                '--disable-gpu',
+                '--disable-web-security',
+                '--disable-features=VizDisplayCompositor'
             ]
             
-            self.browser = await self.playwright.chromium.launch_persistent_context(
-                user_data_dir=self.profile_dir,
-                headless=True,
-                args=browser_args,
-                ignore_default_args=['--disable-extensions']
-            )
+            # Tenta usar launch_persistent_context primeiro
+            try:
+                self.browser = await self.playwright.chromium.launch_persistent_context(
+                    user_data_dir=self.profile_dir,
+                    headless=True,
+                    args=browser_args,
+                    ignore_default_args=['--disable-extensions']
+                )
+            except Exception as e:
+                print(f"⚠️ Erro com launch_persistent_context: {e}")
+                print("🔄 Tentando launch simples...")
+                
+                # Fallback para launch simples
+                self.browser = await self.playwright.chromium.launch(
+                    headless=True,
+                    args=browser_args
+                )
+                self.page = await self.browser.new_page()
+                return self
+            
             self.page = self.browser.pages[0] if self.browser.pages else await self.browser.new_page()
             return self
             
@@ -89,16 +105,24 @@ class ConsultaOABAutomatizada:
             try:
                 print("📦 Tentando instalar Playwright...")
                 subprocess.check_call([sys.executable, "-m", "playwright", "install", "chromium"])
+                subprocess.check_call([sys.executable, "-m", "playwright", "install-deps"])
+                print("✅ Playwright instalado, tentando novamente...")
+                
                 # Tenta novamente
                 self.playwright = await async_playwright().start()
-                self.browser = await self.playwright.chromium.launch_persistent_context(
-                    user_data_dir=self.profile_dir,
-                    headless=True,
-                    args=browser_args,
-                    ignore_default_args=['--disable-extensions']
-                )
-                self.page = self.browser.pages[0] if self.browser.pages else await self.browser.new_page()
-                return self
+                
+                # Tenta launch simples primeiro
+                try:
+                    self.browser = await self.playwright.chromium.launch(
+                        headless=True,
+                        args=browser_args
+                    )
+                    self.page = await self.browser.new_page()
+                    return self
+                except Exception as e2:
+                    print(f"❌ Erro persistente com launch: {e2}")
+                    raise e2
+                    
             except Exception as e2:
                 print(f"❌ Erro persistente: {e2}")
                 raise e2

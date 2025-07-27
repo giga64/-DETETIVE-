@@ -37,15 +37,46 @@ def ensure_playwright():
         try:
             subprocess.check_call([sys.executable, "-m", "pip", "install", "playwright"])
             subprocess.check_call([sys.executable, "-m", "playwright", "install", "chromium"])
+            subprocess.check_call([sys.executable, "-m", "playwright", "install-deps"])
             print("✅ Playwright instalado com sucesso!")
             return True
         except Exception as e:
             print(f"❌ Erro ao instalar Playwright: {e}")
             return False
 
+# Função para testar Playwright
+async def test_playwright():
+    """Testa se o Playwright está funcionando"""
+    try:
+        from playwright.async_api import async_playwright
+        
+        playwright = await async_playwright().start()
+        browser = await playwright.chromium.launch(
+            headless=True,
+            args=[
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage'
+            ]
+        )
+        page = await browser.new_page()
+        await page.goto('https://example.com')
+        await browser.close()
+        await playwright.stop()
+        print("✅ Playwright testado com sucesso!")
+        return True
+    except Exception as e:
+        print(f"❌ Erro ao testar Playwright: {e}")
+        return False
+
 # Verifica Playwright na inicialização
 if OAB_AVAILABLE:
     ensure_playwright()
+    # Testa o Playwright de forma assíncrona
+    try:
+        asyncio.run(test_playwright())
+    except Exception as e:
+        print(f"⚠️ Aviso: Erro ao testar Playwright: {e}")
 
 # ----------------------
 # Configurações de diretórios

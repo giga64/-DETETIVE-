@@ -6,7 +6,10 @@ services:
       pip install -r requirements.txt
       playwright install chromium
       playwright install-deps
+      python -c "from playwright.async_api import async_playwright; print('✅ Playwright instalado com sucesso!')"
     startCommand: python app.py
     envVars:
       - key: PYTHON_VERSION
-        value: 3.9.16 
+        value: 3.9.16
+      - key: PLAYWRIGHT_BROWSERS_PATH
+        value: /opt/render/.cache/ms-playwright 

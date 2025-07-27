@@ -14,5 +14,9 @@ playwright install chromium
 echo "🔧 Instalando dependências do sistema..."
 playwright install-deps
 
+# Verifica se a instalação foi bem-sucedida
+echo "✅ Verificando instalação..."
+python -c "from playwright.async_api import async_playwright; print('✅ Playwright importado com sucesso!')"
+
 echo "✅ Build concluído!"
 echo "🚀 Sistema pronto para deploy no Render." 
