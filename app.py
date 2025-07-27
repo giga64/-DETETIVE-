@@ -3,80 +3,12 @@ import re
 import asyncio
 import sqlite3
 import threading
-import subprocess
-import sys
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from telethon import TelegramClient, events
-
-# Importação do módulo OAB com verificação
-OAB_AVAILABLE = False
-try:
-    from consulta_oab import consulta_oab_completa
-    OAB_AVAILABLE = True
-    print("✅ Módulo OAB carregado com sucesso!")
-except ImportError as e:
-    print(f"⚠️ Módulo consulta_oab não encontrado: {e}")
-    print("💡 Consultas OAB não estarão disponíveis.")
-except Exception as e:
-    print(f"⚠️ Erro ao carregar módulo OAB: {e}")
-    print("💡 Consultas OAB não estarão disponíveis.")
-
-# Função para verificar/instalar Playwright
-def ensure_playwright():
-    """Verifica se o Playwright está instalado e instala se necessário"""
-    try:
-        from playwright.async_api import async_playwright
-        print("✅ Playwright já está instalado!")
-        return True
-    except ImportError:
-        print("📦 Playwright não encontrado. Tentando instalar...")
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "playwright"])
-            subprocess.check_call([sys.executable, "-m", "playwright", "install", "chromium"])
-            subprocess.check_call([sys.executable, "-m", "playwright", "install-deps"])
-            print("✅ Playwright instalado com sucesso!")
-            return True
-        except Exception as e:
-            print(f"❌ Erro ao instalar Playwright: {e}")
-            return False
-
-# Função para testar Playwright
-async def test_playwright():
-    """Testa se o Playwright está funcionando"""
-    try:
-        from playwright.async_api import async_playwright
-        
-        playwright = await async_playwright().start()
-        browser = await playwright.chromium.launch(
-            headless=True,
-            args=[
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage'
-            ]
-        )
-        page = await browser.new_page()
-        await page.goto('https://example.com')
-        await browser.close()
-        await playwright.stop()
-        print("✅ Playwright testado com sucesso!")
-        return True
-    except Exception as e:
-        print(f"❌ Erro ao testar Playwright: {e}")
-        return False
-
-# Verifica Playwright na inicialização
-if OAB_AVAILABLE:
-    ensure_playwright()
-    # Testa o Playwright de forma assíncrona
-    try:
-        asyncio.run(test_playwright())
-    except Exception as e:
-        print(f"⚠️ Aviso: Erro ao testar Playwright: {e}")
 
 # ----------------------
 # Configurações de diretórios
@@ -256,60 +188,6 @@ async def do_consulta(request: Request):
         {"request": request, "mensagem": f"Consulta para {identificador}", "resultado": resultado, "identifier": idn}
     )
 
-# ----------------------
-# Rotas OAB
-# ----------------------
-@app.get("/consulta-oab", response_class=HTMLResponse)
-def form_oab(request: Request):
-    """Página de consulta OAB"""
-    return templates.TemplateResponse("consulta-oab.html", {"request": request})
-
-@app.post("/consulta-oab", response_class=HTMLResponse)
-async def do_consulta_oab(request: Request):
-    """Processa consulta OAB"""
-    try:
-        form_data = await request.form()
-        
-        nome = str(form_data.get("nome", "")).strip()
-        inscricao = str(form_data.get("inscricao", "")).strip()
-        estado = str(form_data.get("estado", "SP"))
-        tipo = str(form_data.get("tipo", "Advogado"))
-        
-        if not nome and not inscricao:
-            return templates.TemplateResponse(
-                "consulta-oab.html",
-                {"request": request, "erro": "Preencha nome OU inscrição."}
-            )
-        
-        # Define o identificador
-        identificador = inscricao if inscricao else nome
-        
-        # Verifica se o módulo OAB está disponível
-        if not OAB_AVAILABLE:
-            return templates.TemplateResponse(
-                "consulta-oab.html",
-                {"request": request, "erro": "Módulo OAB não disponível. Verifique a instalação do Playwright."}
-            )
-        
-        # Executa a consulta
-        resultado = await consulta_oab_completa(identificador, estado, tipo)
-        
-        return templates.TemplateResponse(
-            "modern-result.html",
-            {
-                "request": request,
-                "mensagem": f"Consulta OAB para {identificador}",
-                "resultado": resultado,
-                "identifier": identificador
-            }
-        )
-        
-    except Exception as e:
-        return templates.TemplateResponse(
-            "consulta-oab.html",
-            {"request": request, "erro": f"Erro na consulta: {str(e)}"}
-        )
-
 @app.get("/historico", response_class=HTMLResponse)
 def historico(request: Request):
     return templates.TemplateResponse("historico.html", {"request": request})
@@ -319,6 +197,7 @@ def limpar_historico(request: Request):
     cursor.execute("DELETE FROM searches")
     conn.commit()
     return templates.TemplateResponse("modern-form.html", {"request": request})
+
 
 if __name__ == "__main__":
     import uvicorn
